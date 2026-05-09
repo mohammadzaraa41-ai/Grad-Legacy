@@ -186,7 +186,7 @@ const App = () => {
   const [dashPassword, setDashPassword] = useState('');
   const [isDashAuthenticated, setIsDashAuthenticated] = useState(false);
   const [messages, setMessages] = useState([]);
-  const [activeMedia, setActiveMedia] = useState(null);
+  const [activeMessage, setActiveMessage] = useState(null);
 
   // Recording states
   const [isRecording, setIsRecording] = useState(false);
@@ -326,7 +326,7 @@ const App = () => {
     setIsDashAuthenticated(false);
     setDashPassword('');
     setMessages([]);
-    setActiveMedia(null);
+    setActiveMessage(null);
     if (isRecording) stopRecording();
   };
 
@@ -382,22 +382,23 @@ const App = () => {
     }
   };
 
-  const openMedia = async (attachments) => {
+  const openMessage = async (msg) => {
     triggerHaptic(15);
     setIsSending(true); 
     try {
       const activeMediaItems = [];
-      for (const mediaType of Object.keys(attachments)) {
-        const path = attachments[mediaType];
-        const { data, error } = await supabase.storage
-          .from('attachments')
-          .createSignedUrl(path, 60);
+      if (msg.attachments && Object.keys(msg.attachments).length > 0) {
+        for (const mediaType of Object.keys(msg.attachments)) {
+          const path = msg.attachments[mediaType];
+          const { data, error } = await supabase.storage
+            .from('attachments')
+            .createSignedUrl(path, 60);
 
-        if (error) throw error;
-        activeMediaItems.push({ type: mediaType, url: data.signedUrl });
+          if (error) throw error;
+          activeMediaItems.push({ type: mediaType, url: data.signedUrl });
+        }
       }
-      
-      setActiveMedia(activeMediaItems);
+      setActiveMessage({ ...msg, mediaItems: activeMediaItems });
     } catch (err) {
       console.error('Signed URL error:', err);
       setError(lang === 'ar' ? 'فشل تحميل الملف الآمن.' : 'Failed to load secured file.');
@@ -582,21 +583,18 @@ const App = () => {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                 {messages.map((msg, i) => (
-                  <motion.div key={msg.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }} className="group relative bg-white/5 border border-white/10 rounded-2xl md:rounded-3xl p-6 md:p-8 hover:bg-white/10 transition-all">
+                  <motion.div key={msg.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }} className="group relative bg-white/5 border border-white/10 rounded-2xl md:rounded-3xl p-6 md:p-8 hover:bg-white/10 transition-all cursor-pointer" onClick={() => openMessage(msg)}>
                     <Mail className="text-white/20 mb-4 md:mb-6 group-hover:text-neon-blue transition-colors" size={28} />
                     <p className="text-lg md:text-xl font-medium mb-6 line-clamp-3 text-white/80 italic">"{msg.message_text}"</p>
                     <div className="flex flex-col gap-4 mt-6 pt-6 border-t border-white/10">
                       {msg.attachments && Object.keys(msg.attachments).length > 0 && (
-                        <button 
-                          onClick={() => openMedia(msg.attachments)}
-                          className="w-full py-3 rounded-xl bg-neon-blue/10 border border-neon-blue/20 text-neon-blue text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-neon-blue/20 transition-all"
-                        >
-                          <Play size={14} /> {t('readMessage')} & {t('mediaSecured')}
-                        </button>
+                        <div className="w-full py-3 rounded-xl bg-neon-blue/10 border border-neon-blue/20 text-neon-blue text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2">
+                          <Play size={14} /> {t('mediaSecured')}
+                        </div>
                       )}
                       <div className="flex justify-between items-center">
                         <div className="text-xs md:text-sm"><span className="block font-black opacity-40 uppercase tracking-widest text-[9px] mb-1">From</span><span className="font-bold">{msg.sender_name || (lang === 'ar' ? 'مجهول' : 'Anonymous')}</span></div>
-                        <button className="p-2.5 md:p-3 rounded-xl bg-white/5 hover:bg-neon-blue hover:text-black transition-all" onClick={() => triggerHaptic(10)}><Eye size={18} /></button>
+                        <button className="p-2.5 md:p-3 rounded-xl bg-white/5 hover:bg-neon-blue hover:text-black transition-all"><Eye size={18} /></button>
                       </div>
                     </div>
                   </motion.div>
@@ -604,24 +602,37 @@ const App = () => {
               </div>
             </div>
 
-            {/* Media Viewer Modal */}
+            {/* Full Message Viewer Modal */}
             <AnimatePresence>
-              {activeMedia && activeMedia.length > 0 && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl flex flex-col items-center justify-start p-6 overflow-y-auto">
-                  <button onClick={() => setActiveMedia(null)} className="fixed top-6 right-6 md:top-10 md:right-10 p-4 rounded-full bg-white/10 hover:bg-white/20 transition-all text-white z-50"><X size={24} /></button>
-                  <div className="max-w-4xl w-full flex flex-col items-center gap-8 py-20">
-                    {activeMedia.map((media, idx) => (
-                      <div key={idx} className="w-full flex justify-center">
-                        {media.type === 'image' && <img src={media.url} className="max-h-[70vh] rounded-3xl shadow-2xl border border-white/10 object-contain" />}
-                        {media.type === 'video' && <video controls src={media.url} className="max-h-[70vh] rounded-3xl shadow-2xl border border-white/10 w-full" />}
-                        {media.type === 'voice' && (
-                          <div className="bg-white/5 p-8 md:p-12 rounded-[3rem] border border-white/10 text-center w-full max-w-md">
-                            <Mic size={48} className="mx-auto mb-6 text-neon-blue animate-pulse" />
-                            <audio controls src={media.url} className="w-full" />
-                          </div>
-                        )}
+              {activeMessage && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl flex flex-col items-center justify-start p-6 md:p-12 overflow-y-auto">
+                  <button onClick={() => setActiveMessage(null)} className="fixed top-6 right-6 md:top-10 md:right-10 p-4 rounded-full bg-white/10 hover:bg-white/20 transition-all text-white z-50"><X size={24} /></button>
+                  <div className="max-w-4xl w-full flex flex-col gap-8 py-16 md:py-20">
+                    <div className="bg-white/5 border border-white/10 rounded-[2rem] md:rounded-[3rem] p-8 md:p-14 text-center">
+                      <Mail className="mx-auto text-neon-blue mb-8" size={48} />
+                      <p className="text-xl md:text-3xl font-medium leading-relaxed italic text-white/90 mb-10">"{activeMessage.message_text}"</p>
+                      <div className="inline-block px-6 py-3 rounded-full bg-white/5 border border-white/10">
+                        <span className="opacity-50 uppercase tracking-widest text-[10px] md:text-xs font-black mr-2">From</span>
+                        <span className="font-bold text-sm md:text-base">{activeMessage.sender_name || (lang === 'ar' ? 'مجهول' : 'Anonymous')}</span>
                       </div>
-                    ))}
+                    </div>
+                    {activeMessage.mediaItems && activeMessage.mediaItems.length > 0 && (
+                      <div className="w-full flex flex-col items-center gap-8">
+                        <div className="w-full h-px bg-white/10 my-4" />
+                        {activeMessage.mediaItems.map((media, idx) => (
+                          <div key={idx} className="w-full flex justify-center">
+                            {media.type === 'image' && <img src={media.url} className="max-h-[70vh] rounded-[2rem] shadow-2xl border border-white/10 object-contain" />}
+                            {media.type === 'video' && <video controls src={media.url} className="max-h-[70vh] rounded-[2rem] shadow-2xl border border-white/10 w-full" />}
+                            {media.type === 'voice' && (
+                              <div className="bg-white/5 p-8 md:p-12 rounded-[3rem] border border-white/10 text-center w-full max-w-md">
+                                <Mic size={48} className="mx-auto mb-6 text-neon-purple animate-pulse" />
+                                <audio controls src={media.url} className="w-full" />
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </motion.div>
               )}
