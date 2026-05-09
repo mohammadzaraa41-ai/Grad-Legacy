@@ -435,7 +435,7 @@ const App = () => {
               {graduates.map((grad) => (
                 <motion.div key={grad.id} whileHover={{ scale: 1.02, translateY: -5 }} whileTap={{ scale: 0.98 }} className={`relative group cursor-pointer rounded-[2.5rem] overflow-hidden border border-white/10 bg-white/5 backdrop-blur-xl transition-all duration-300 ${grad.glow} hover:border-white/20`} onClick={() => { setSelectedGrad(grad); setView('form'); triggerHaptic(20); }}>
                   <div className="aspect-[4/5] relative overflow-hidden">
-                    <img src={grad.image} alt={grad.name[lang]} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 scale-105 group-hover:scale-100" />
+                    <img src={grad.image} alt={grad.name[lang]} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 scale-105 group-hover:scale-100 mobile-pulse" />
                     <div className="absolute inset-0 bg-gradient-to-t from-charcoal via-charcoal/40 to-transparent" />
                   </div>
                   <div className="absolute bottom-0 left-0 right-0 p-8 md:p-10">
