@@ -12,16 +12,16 @@ import grad2 from './assets/grad2.jpg';
 const graduates = [
   {
     id: 1,
-    name: { en: 'Mohammad Alzaraa', ar: 'محمد الزراع' },
-    role: { en: 'Class of 2026', ar: 'دفعة 2026' },
+    name: { en: 'Mohammad Alzaraa', ar: 'Mohammad Alzaraa' },
+    role: { en: 'Class of 2026', ar: 'Class of 2026' },
     image: grad1,
     accent: 'var(--color-neon-blue)',
     glow: 'shadow-[0_0_20px_rgba(0,210,255,0.3)]',
   },
   {
     id: 2,
-    name: { en: 'Yousef Alhardan', ar: 'يوسف الحردان' },
-    role: { en: 'Class of 2026', ar: 'دفعة 2026' },
+    name: { en: 'Yousef Alhardan', ar: 'Yousef Alhardan' },
+    role: { en: 'Class of 2026', ar: 'Class of 2026' },
     image: grad2,
     accent: 'var(--color-neon-purple)',
     glow: 'shadow-[0_0_20px_rgba(157,80,187,0.3)]',
