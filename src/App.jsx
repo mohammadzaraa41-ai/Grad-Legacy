@@ -593,7 +593,7 @@ const App = () => {
                         </div>
                       )}
                       <div className="flex justify-between items-center">
-                        <div className="text-xs md:text-sm"><span className="block font-black opacity-40 uppercase tracking-widest text-[9px] mb-1">From</span><span className="font-bold">{msg.sender_name || (lang === 'ar' ? 'مجهول' : 'Anonymous')}</span></div>
+                        <div className="text-xs md:text-sm"><span className="font-bold text-neon-blue">{msg.sender_name || (lang === 'ar' ? 'مجهول' : 'Anonymous')}</span></div>
                         <button className="p-2.5 md:p-3 rounded-xl bg-white/5 hover:bg-neon-blue hover:text-black transition-all"><Eye size={18} /></button>
                       </div>
                     </div>
@@ -612,8 +612,7 @@ const App = () => {
                       <Mail className="mx-auto text-neon-blue mb-8" size={48} />
                       <p className="text-xl md:text-3xl font-medium leading-relaxed italic text-white/90 mb-10">"{activeMessage.message_text}"</p>
                       <div className="inline-block px-6 py-3 rounded-full bg-white/5 border border-white/10">
-                        <span className="opacity-50 uppercase tracking-widest text-[10px] md:text-xs font-black mr-2">From</span>
-                        <span className="font-bold text-sm md:text-base">{activeMessage.sender_name || (lang === 'ar' ? 'مجهول' : 'Anonymous')}</span>
+                        <span className="font-bold text-sm md:text-base text-neon-blue">{activeMessage.sender_name || (lang === 'ar' ? 'مجهول' : 'Anonymous')}</span>
                       </div>
                     </div>
                     {activeMessage.mediaItems && activeMessage.mediaItems.length > 0 && (
