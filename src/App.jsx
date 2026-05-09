@@ -6,8 +6,8 @@ import {
   Lock, Mail, Eye, Download, Star, ExternalLink, Menu, Settings, Terminal, Loader2, Play, Square
 } from 'lucide-react';
 import { supabase } from './supabaseClient';
-import grad1 from './assets/grad1.png';
-import grad2 from './assets/grad2.png';
+import grad1 from './assets/grad1.jpg';
+import grad2 from './assets/grad2.jpg';
 
 const graduates = [
   {
@@ -54,7 +54,6 @@ const translations = {
     max: 'الحد الأقصى',
     attached: 'تم الحفظ',
     send: 'إرسال',
-    encryptedTransmission: 'نقل مشفر بالكامل (End-to-End)',
     successTitle: 'تم الارسال بنجاح',
     successSubtitle: 'تم تشفير رسالتك وإيداعها في الخزنة الخاصة بـ',
     successMedia: ' والوسائط المشفرة',
@@ -98,7 +97,6 @@ const translations = {
     max: 'Max',
     attached: 'Recorded',
     send: 'Send',
-    encryptedTransmission: 'End-to-End Encrypted Transmission',
     successTitle: 'Sent Successfully',
     successSubtitle: 'Your message has been encrypted and deposited into the private vault of',
     successMedia: ' and encrypted media',
@@ -531,7 +529,6 @@ const App = () => {
                         {isSending ? <Loader2 className="animate-spin" size={24} /> : <Send size={24} className={lang === 'ar' ? 'rotate-180' : ''} />}
                         {isSending ? t('sending') : t('send')}
                       </button>
-                      <div className="flex items-center justify-center gap-3 text-white/20 text-[10px] font-bold uppercase tracking-widest"><Shield size={14} /> {t('encryptedTransmission')}</div>
                     </form>
                   </motion.div>
                 ) : (
