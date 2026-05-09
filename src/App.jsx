@@ -538,9 +538,7 @@ const App = () => {
                     <Certificate name={formData.name} grad={selectedGrad} lang={lang} t={t} />
                     <h2 className="text-3xl md:text-4xl font-black mb-4">{t('successTitle')}</h2>
                     <p className="text-white/50 text-base md:text-lg mb-8 md:mb-10 max-w-xs mx-auto leading-relaxed">{t('successSubtitle')} <span className="text-white font-bold">{selectedGrad.name[lang].split(' ')[0]}</span>{Object.keys(attachments).length > 0 && t('successMedia')}.</p>
-                    <div className="bg-white/5 border border-white/10 rounded-2xl md:rounded-[2rem] p-6 md:p-8 mb-8 md:mb-10 text-start">
-                      <div className="flex items-start gap-4"><Shield className="text-neon-blue mt-1 shrink-0" size={20} /><div><p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1">{t('privacyConfirmation')}</p><p className="text-white/60 text-xs md:text-sm leading-relaxed">{t('privacyText')}</p></div></div>
-                    </div>
+
                     <div className="flex flex-col gap-3 md:gap-4">
                       <button onClick={handleReset} className="w-full py-4 rounded-xl border border-white/10 hover:bg-white/5 transition-all font-bold opacity-60 hover:opacity-100">{t('returnHome')}</button>
                     </div>
