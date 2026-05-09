@@ -382,18 +382,20 @@ const App = () => {
 
   const openMedia = async (attachments) => {
     triggerHaptic(15);
-    const mediaType = Object.keys(attachments)[0];
-    const path = attachments[mediaType];
-    
     setIsSending(true); 
     try {
-      const { data, error } = await supabase.storage
-        .from('attachments')
-        .createSignedUrl(path, 60);
+      const activeMediaItems = [];
+      for (const mediaType of Object.keys(attachments)) {
+        const path = attachments[mediaType];
+        const { data, error } = await supabase.storage
+          .from('attachments')
+          .createSignedUrl(path, 60);
 
-      if (error) throw error;
+        if (error) throw error;
+        activeMediaItems.push({ type: mediaType, url: data.signedUrl });
+      }
       
-      setActiveMedia({ type: mediaType, url: data.signedUrl });
+      setActiveMedia(activeMediaItems);
     } catch (err) {
       console.error('Signed URL error:', err);
       setError(lang === 'ar' ? 'فشل تحميل الملف الآمن.' : 'Failed to load secured file.');
@@ -604,18 +606,22 @@ const App = () => {
 
             {/* Media Viewer Modal */}
             <AnimatePresence>
-              {activeMedia && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl flex items-center justify-center p-6">
-                  <button onClick={() => setActiveMedia(null)} className="absolute top-10 right-10 p-4 rounded-full bg-white/10 hover:bg-white/20 transition-all text-white"><X size={32} /></button>
-                  <div className="max-w-4xl w-full flex flex-col items-center">
-                    {activeMedia.type === 'image' && <img src={activeMedia.url} className="max-h-[70vh] rounded-3xl shadow-2xl border border-white/10" />}
-                    {activeMedia.type === 'video' && <video controls src={activeMedia.url} className="max-h-[70vh] rounded-3xl shadow-2xl border border-white/10 w-full" autoPlay />}
-                    {activeMedia.type === 'voice' && (
-                      <div className="bg-white/5 p-12 rounded-[3rem] border border-white/10 text-center w-full max-w-md">
-                        <Mic size={64} className="mx-auto mb-8 text-neon-blue animate-pulse" />
-                        <audio controls src={activeMedia.url} className="w-full" autoPlay />
+              {activeMedia && activeMedia.length > 0 && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl flex flex-col items-center justify-start p-6 overflow-y-auto">
+                  <button onClick={() => setActiveMedia(null)} className="fixed top-6 right-6 md:top-10 md:right-10 p-4 rounded-full bg-white/10 hover:bg-white/20 transition-all text-white z-50"><X size={24} /></button>
+                  <div className="max-w-4xl w-full flex flex-col items-center gap-8 py-20">
+                    {activeMedia.map((media, idx) => (
+                      <div key={idx} className="w-full flex justify-center">
+                        {media.type === 'image' && <img src={media.url} className="max-h-[70vh] rounded-3xl shadow-2xl border border-white/10 object-contain" />}
+                        {media.type === 'video' && <video controls src={media.url} className="max-h-[70vh] rounded-3xl shadow-2xl border border-white/10 w-full" />}
+                        {media.type === 'voice' && (
+                          <div className="bg-white/5 p-8 md:p-12 rounded-[3rem] border border-white/10 text-center w-full max-w-md">
+                            <Mic size={48} className="mx-auto mb-6 text-neon-blue animate-pulse" />
+                            <audio controls src={media.url} className="w-full" />
+                          </div>
+                        )}
                       </div>
-                    )}
+                    ))}
                   </div>
                 </motion.div>
               )}
