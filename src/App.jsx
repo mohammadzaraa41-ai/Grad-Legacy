@@ -149,11 +149,11 @@ const Typewriter = ({ text }) => {
   );
 };
 
-const Stardust = ({ count = 40 }) => {
+const Stardust = ({ count = window.innerWidth < 768 ? 15 : 40 }) => {
   return (
     <div className="fixed inset-0 pointer-events-none z-[60] overflow-hidden">
       {[...Array(count)].map((_, i) => (
-        <motion.div key={i} initial={{ opacity: 0, scale: 0, x: '50vw', y: '80vh' }} animate={{ opacity: [0, 1, 1, 0], scale: [0, 1, 0.5, 0], x: `${Math.random() * 100}vw`, y: `${Math.random() * 100}vh`, }} transition={{ duration: 2 + Math.random() * 2, ease: "easeOut", delay: Math.random() * 0.2 }} className="absolute w-2 h-2 rounded-full bg-white blur-[1px]" style={{ boxShadow: `0 0 10px ${Math.random() > 0.5 ? 'var(--color-neon-blue)' : 'var(--color-neon-purple)'}` }} />
+        <motion.div key={i} initial={{ opacity: 0, scale: 0, x: '50vw', y: '80vh' }} animate={{ opacity: [0, 1, 1, 0], scale: [0, 1, 0.5, 0], x: `${Math.random() * 100}vw`, y: `${Math.random() * 100}vh`, }} transition={{ duration: 2 + Math.random() * 2, ease: "easeOut", delay: Math.random() * 0.2 }} className="absolute w-2 h-2 rounded-full bg-white" style={{ boxShadow: `0 0 8px ${Math.random() > 0.5 ? 'var(--color-neon-blue)' : 'var(--color-neon-purple)'}` }} />
       ))}
     </div>
   );
@@ -233,8 +233,10 @@ const App = () => {
 
       recorder.ondataavailable = (e) => chunks.push(e.data);
       recorder.onstop = () => {
-        const blob = new Blob(chunks, { type: 'audio/webm' });
-        const file = new File([blob], 'recording.webm', { type: 'audio/webm' });
+        const mimeType = recorder.mimeType || 'audio/webm';
+        const ext = mimeType.includes('mp4') ? 'mp4' : mimeType.includes('ogg') ? 'ogg' : 'webm';
+        const blob = new Blob(chunks, { type: mimeType });
+        const file = new File([blob], `recording.${ext}`, { type: mimeType });
         setAttachments(prev => ({ ...prev, voice: file }));
         setIsRecording(false);
         setRecordingTime(0);
@@ -457,8 +459,8 @@ const App = () => {
         {view === 'form' && (
           <motion.div key="form" initial={{ opacity: 0, x: lang === 'ar' ? -50 : 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: lang === 'ar' ? 50 : -50 }} className="container mx-auto px-4 py-24 flex items-center justify-center min-h-screen">
             <div className="w-full max-w-xl">
-              <div className="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] md:rounded-[3rem] p-6 md:p-14 relative overflow-hidden">
-                <div className={`absolute -top-24 ${lang === 'ar' ? '-left-24' : '-right-24'} w-64 h-64 blur-[120px] opacity-20 rounded-full`} style={{ backgroundColor: selectedGrad.accent }} />
+              <div className="bg-white/5 backdrop-blur-xl md:backdrop-blur-3xl border border-white/10 rounded-[2.5rem] md:rounded-[3rem] p-6 md:p-14 relative overflow-hidden">
+                <div className={`absolute -top-24 ${lang === 'ar' ? '-left-24' : '-right-24'} w-64 h-64 blur-[80px] md:blur-[120px] opacity-20 rounded-full`} style={{ backgroundColor: selectedGrad.accent }} />
                 {!isSent ? (
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                     <div className="flex items-center gap-5 md:gap-6 mb-8 md:mb-10 relative">
@@ -552,7 +554,7 @@ const App = () => {
         {view === 'dash-auth' && (
           <motion.div key="dash-auth" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="container mx-auto px-6 py-24 flex items-center justify-center min-h-screen">
             <div className="w-full max-md">
-              <div className="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2rem] md:rounded-[2.5rem] p-8 md:p-10 text-center">
+              <div className="bg-white/5 backdrop-blur-xl md:backdrop-blur-3xl border border-white/10 rounded-[2rem] md:rounded-[2.5rem] p-8 md:p-10 text-center">
                 <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl md:rounded-3xl overflow-hidden mx-auto mb-6 border-2 border-white/10"><img src={selectedGrad.image} className="w-full h-full object-cover" /></div>
                 <h2 className="text-2xl md:text-3xl font-black mb-2">{t('dashboardTitle')}</h2>
                 <p className="text-sm text-white/50 mb-10">{t('enterPassword')}</p>
