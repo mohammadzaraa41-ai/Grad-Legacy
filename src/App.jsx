@@ -441,7 +441,6 @@ const App = () => {
                 <motion.div key={grad.id} whileHover={{ scale: 1.02, translateY: -5 }} whileTap={{ scale: 0.98 }} className={`relative group cursor-pointer rounded-[2.5rem] overflow-hidden border border-white/10 bg-white/5 backdrop-blur-xl transition-all duration-300 ${grad.glow} hover:border-white/20`} onClick={() => { setSelectedGrad(grad); setView('form'); triggerHaptic(20); }}>
                   <div className="aspect-[4/5] relative overflow-hidden">
                     <img src={grad.image} alt={grad.name[lang]} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 scale-105 group-hover:scale-100 mobile-pulse" />
-                    <div className="absolute inset-0 opacity-40 group-hover:opacity-70 transition-opacity duration-700 mix-blend-overlay" style={{ background: `radial-gradient(circle at 50% 40%, ${grad.accent}, transparent 70%)` }} />
                     <div className="absolute inset-0 bg-gradient-to-t from-charcoal via-charcoal/40 to-transparent" />
                   </div>
                   <div className="absolute bottom-0 left-0 right-0 p-8 md:p-10">
@@ -466,9 +465,8 @@ const App = () => {
                 {!isSent ? (
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                     <div className="flex items-center gap-5 md:gap-6 mb-8 md:mb-10 relative">
-                      <motion.div whileTap={{ scale: 0.9 }} onClick={() => { setView('dash-auth'); triggerHaptic(20); }} className="w-16 h-16 md:w-20 md:h-20 rounded-2xl md:rounded-[1.5rem] overflow-hidden border-2 border-white/10 shadow-2xl cursor-pointer hover:border-white/30 transition-all relative">
+                      <motion.div whileTap={{ scale: 0.9 }} onClick={() => { setView('dash-auth'); triggerHaptic(20); }} className="w-16 h-16 md:w-20 md:h-20 rounded-2xl md:rounded-[1.5rem] overflow-hidden border-2 border-white/10 shadow-2xl cursor-pointer hover:border-white/30 transition-all">
                         <img src={selectedGrad.image} alt={selectedGrad.name[lang]} className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 opacity-40 mix-blend-overlay" style={{ background: `radial-gradient(circle at 50% 40%, ${selectedGrad.accent}, transparent 70%)` }} />
                       </motion.div>
                       <div>
                         <h2 className="text-2xl md:text-3xl font-black">{t('messageFor')} {selectedGrad.name[lang].split(' ')[0]}</h2>
@@ -558,10 +556,7 @@ const App = () => {
           <motion.div key="dash-auth" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="container mx-auto px-6 py-24 flex items-center justify-center min-h-screen">
             <div className="w-full max-md">
               <div className="bg-white/5 backdrop-blur-xl md:backdrop-blur-3xl border border-white/10 rounded-[2rem] md:rounded-[2.5rem] p-8 md:p-10 text-center">
-                <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl md:rounded-3xl overflow-hidden mx-auto mb-6 border-2 border-white/10 relative">
-                  <img src={selectedGrad.image} className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 opacity-40 mix-blend-overlay" style={{ background: `radial-gradient(circle at 50% 40%, ${selectedGrad.accent}, transparent 70%)` }} />
-                </div>
+                <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl md:rounded-3xl overflow-hidden mx-auto mb-6 border-2 border-white/10"><img src={selectedGrad.image} className="w-full h-full object-cover" /></div>
                 <h2 className="text-2xl md:text-3xl font-black mb-2">{t('dashboardTitle')}</h2>
                 <p className="text-sm text-white/50 mb-10">{t('enterPassword')}</p>
                 <form onSubmit={handleDashAuth} className="space-y-4">
