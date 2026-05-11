@@ -8,6 +8,8 @@ import {
 import { supabase } from './supabaseClient';
 import grad1 from './assets/grad1.jpg';
 import grad2 from './assets/grad2.jpg';
+import grad3 from './assets/grad3.jpg';
+
 
 const graduates = [
   {
@@ -25,6 +27,14 @@ const graduates = [
     image: grad2,
     accent: 'var(--color-neon-purple)',
     glow: 'shadow-[0_0_20px_rgba(157,80,187,0.3)]',
+  },
+  {
+    id: 3,
+    name: { en: 'Ibrahim Wazwaz', ar: 'إبراهيم وزوز' },
+    role: { en: 'Class of 2026', ar: 'Class of 2026' },
+    image: grad3,
+    accent: '#10b981', // Emerald green
+    glow: 'shadow-[0_0_20px_rgba(16,185,129,0.3)]',
   },
 ];
 
@@ -436,7 +446,7 @@ const App = () => {
               </h1>
               <p className="text-white/60 text-lg md:text-2xl max-w-2xl mx-auto font-medium leading-relaxed">{t('subtitle')}</p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-5xl">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full max-w-6xl">
               {graduates.map((grad) => (
                 <motion.div key={grad.id} whileHover={{ scale: 1.02, translateY: -5 }} whileTap={{ scale: 0.98 }} className={`relative group cursor-pointer rounded-[2.5rem] overflow-hidden border border-white/10 bg-white/5 backdrop-blur-xl transition-all duration-300 ${grad.glow} hover:border-white/20`} onClick={() => { setSelectedGrad(grad); setView('form'); triggerHaptic(20); }}>
                   <div className="aspect-[4/5] relative overflow-hidden">
