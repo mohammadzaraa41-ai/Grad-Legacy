@@ -30,7 +30,7 @@ const graduates = [
   },
   {
     id: 3,
-    name: { en: 'Ibrahim Wazwaz', ar: 'إبراهيم وزوز' },
+    name: { en: 'Ibrahim Wazwaz', ar: 'Ibrahim Wazwaz' },
     role: { en: 'Class of 2026', ar: 'Class of 2026' },
     image: grad3,
     accent: '#10b981', // Emerald green
