@@ -198,7 +198,7 @@ const App = () => {
   const [messages, setMessages] = useState([]);
   const [activeMessage, setActiveMessage] = useState(null);
 
-  // Recording states
+
   const [isRecording, setIsRecording] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState(null);
   const [recordingTime, setRecordingTime] = useState(0);
@@ -495,7 +495,6 @@ const App = () => {
                       <div className="space-y-4">
                         <label className="block text-[10px] md:text-xs font-bold text-white/40 uppercase tracking-[0.2em]">{t('attachments')}</label>
                         <div className="grid grid-cols-3 gap-3 md:gap-4">
-                          {/* Recording/Voice Button */}
                           <div className="relative">
                             <button 
                               type="button" 
@@ -518,7 +517,6 @@ const App = () => {
                             </button>
                           </div>
 
-                          {/* Image Upload */}
                           <div className="relative">
                             <input type="file" className="hidden" ref={el => fileInputRef.current['image'] = el} accept="image/*" onChange={(e) => handleFileChange('image', e)} />
                             <button type="button" onClick={() => attachments['image'] ? removeAttachment('image') : fileInputRef.current['image'].click()} className={`flex flex-col items-center justify-center gap-1.5 md:gap-2 w-full py-4 md:py-5 rounded-xl md:rounded-2xl border-2 transition-all ${attachments['image'] ? 'bg-white/10 border-white/40' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}>
@@ -528,7 +526,6 @@ const App = () => {
                             </button>
                           </div>
 
-                          {/* Video Upload */}
                           <div className="relative">
                             <input type="file" className="hidden" ref={el => fileInputRef.current['video'] = el} accept="video/*" onChange={(e) => handleFileChange('video', e)} />
                             <button type="button" onClick={() => attachments['video'] ? removeAttachment('video') : fileInputRef.current['video'].click()} className={`flex flex-col items-center justify-center gap-1.5 md:gap-2 w-full py-4 md:py-5 rounded-xl md:rounded-2xl border-2 transition-all ${attachments['video'] ? 'bg-white/10 border-white/40' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}>
@@ -611,7 +608,6 @@ const App = () => {
               </div>
             </div>
 
-            {/* Full Message Viewer Modal */}
             <AnimatePresence>
               {activeMessage && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl flex flex-col items-center justify-start p-6 md:p-12 overflow-y-auto">
