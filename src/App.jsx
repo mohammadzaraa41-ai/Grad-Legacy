@@ -215,8 +215,22 @@ const App = () => {
           input_key: dashPassword
         });
         
-        if (error) console.error('Data error:', error);
-        else setMessages(data);
+        if (error) {
+          console.warn('RPC failed or missing. Attempting direct fallback...', error);
+          const { data: fallbackData, error: fallbackError } = await supabase
+            .from('messages')
+            .select('*')
+            .eq('graduate_id', selectedGrad.id);
+            
+          if (fallbackError) {
+             console.error('Fallback Data error:', fallbackError);
+          } else {
+             const sortedData = fallbackData ? fallbackData.sort((a, b) => b.id - a.id) : [];
+             setMessages(sortedData);
+          }
+        } else {
+          setMessages(data || []);
+        }
       };
 
       fetchMessages();
