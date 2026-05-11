@@ -210,11 +210,10 @@ const App = () => {
   useEffect(() => {
     if (isDashAuthenticated && selectedGrad) {
       const fetchMessages = async () => {
-        const { data, error } = await supabase
-          .from('messages')
-          .select('*')
-          .eq('graduate_id', selectedGrad.id)
-          .order('created_at', { ascending: false });
+        const { data, error } = await supabase.rpc('fetch_vault_messages', {
+          target_grad_id: selectedGrad.id,
+          input_key: dashPassword
+        });
         
         if (error) console.error('Data error:', error);
         else setMessages(data);
