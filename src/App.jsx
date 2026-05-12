@@ -452,7 +452,6 @@ const App = () => {
 
       const { data: success, error } = await supabase.rpc('hide_vault_message', {
         msg_id: msgId,
-        message_id: msgId,
         input_key: dashPassword
       });
 
@@ -481,7 +480,6 @@ const App = () => {
 
       const { data: success, error } = await supabase.rpc('restore_vault_message', {
         msg_id: msgId,
-        message_id: msgId,
         input_key: dashPassword
       });
 
@@ -513,7 +511,6 @@ const App = () => {
 
       const { data: success, error } = await supabase.rpc('delete_vault_message', {
         msg_id: msgId,
-        message_id: msgId,
         input_key: dashPassword
       });
 
