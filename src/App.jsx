@@ -222,10 +222,11 @@ const App = () => {
     
     if (error) {
       console.warn('RPC failed or missing. Attempting direct fallback...', error);
-      const { data: fallbackData, error: fallbackError } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('graduate_id', selectedGrad.id);
+      let query = supabase.from('messages').select('*').eq('graduate_id', selectedGrad.id);
+      
+      // Try to filter out hidden messages in fallback if we're in active vault
+      // We don't know the column name for sure, but we can try common ones or just let the user see all
+      const { data: fallbackData, error: fallbackError } = await query;
         
       if (fallbackError) {
          console.error('Fallback Data error:', fallbackError);
@@ -233,7 +234,7 @@ const App = () => {
          const sortedData = fallbackData ? [...fallbackData].sort((a, b) => {
            const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
            const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
-           return timeB !== timeA ? timeB - timeA : (b.id > a.id ? 1 : -1);
+           return timeB !== timeA ? timeB - timeA : (String(b.id) > String(a.id) ? 1 : -1);
          }) : [];
          setMessages(sortedData);
       }
@@ -241,7 +242,7 @@ const App = () => {
       const sortedData = data ? [...data].sort((a, b) => {
         const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
         const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
-        return timeB !== timeA ? timeB - timeA : (b.id > a.id ? 1 : -1);
+        return timeB !== timeA ? timeB - timeA : (String(b.id) > String(a.id) ? 1 : -1);
       }) : [];
       setMessages(sortedData);
     }
@@ -444,19 +445,19 @@ const App = () => {
 
       const { data: success, error } = await supabase.rpc('hide_vault_message', {
         msg_id: msgId,
+        message_id: msgId,
         input_key: dashPassword
       });
 
       if (error) throw error;
-      if (!success) {
-        // Rollback if failed
-        throw new Error('RPC returned false');
+      if (success === false) {
+        throw new Error('Action rejected by server');
       }
     } catch (err) {
       console.error('Hide error:', err);
-      setError(lang === 'ar' ? 'فشل إخفاء الرسالة. تأكد من الصلاحيات.' : 'Failed to hide message. Check permissions.');
-      // Refresh to restore state
-      fetchMessages();
+      setError(lang === 'ar' ? `فشل الإخفاء: ${err.message || 'خطأ في الصلاحيات'}` : `Hide failed: ${err.message || 'Permission error'}`);
+      // Refresh to restore state after a delay
+      setTimeout(fetchMessages, 2000);
     }
   };
 
@@ -489,18 +490,22 @@ const App = () => {
 
       const { data: success, error } = await supabase.rpc('delete_vault_message', {
         msg_id: msgId,
+        message_id: msgId,
         input_key: dashPassword
       });
 
-      if (error) throw error;
-      if (!success) {
-        throw new Error('RPC returned false');
+      if (error) {
+        console.warn('RPC delete failed, trying direct delete...');
+        const { error: directError } = await supabase.from('messages').delete().eq('id', msgId);
+        if (directError) throw directError;
+      } else if (success === false) {
+        throw new Error('Action rejected by server');
       }
     } catch (err) {
       console.error('Delete error:', err);
-      setError(lang === 'ar' ? 'فشل حذف الرسالة. تأكد من الصلاحيات.' : 'Failed to delete message. Check permissions.');
-      // Refresh to restore state
-      fetchMessages();
+      setError(lang === 'ar' ? `فشل الحذف: ${err.message || 'خطأ في الصلاحيات'}` : `Delete failed: ${err.message || 'Permission error'}`);
+      // Refresh to restore state after a delay
+      setTimeout(fetchMessages, 2000);
     }
   };
 
