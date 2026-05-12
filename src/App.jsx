@@ -211,36 +211,44 @@ const App = () => {
   const fileInputRef = useRef({});
   const t = (key) => translations[lang][key];
 
-  useEffect(() => {
-    if (isDashAuthenticated && selectedGrad) {
-      const fetchMessages = async () => {
-        const rpcName = viewMode === 'active' ? 'fetch_vault_messages' : 'fetch_hidden_messages';
-        const { data, error } = await supabase.rpc(rpcName, {
-          target_grad_id: selectedGrad.id,
-          input_key: dashPassword
-        });
+  const fetchMessages = async () => {
+    if (!isDashAuthenticated || !selectedGrad) return;
+    
+    const rpcName = viewMode === 'active' ? 'fetch_vault_messages' : 'fetch_hidden_messages';
+    const { data, error } = await supabase.rpc(rpcName, {
+      target_grad_id: selectedGrad.id,
+      input_key: dashPassword
+    });
+    
+    if (error) {
+      console.warn('RPC failed or missing. Attempting direct fallback...', error);
+      const { data: fallbackData, error: fallbackError } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('graduate_id', selectedGrad.id);
         
-        if (error) {
-          console.warn('RPC failed or missing. Attempting direct fallback...', error);
-          const { data: fallbackData, error: fallbackError } = await supabase
-            .from('messages')
-            .select('*')
-            .eq('graduate_id', selectedGrad.id);
-            
-          if (fallbackError) {
-             console.error('Fallback Data error:', fallbackError);
-          } else {
-             const sortedData = fallbackData ? fallbackData.sort((a, b) => b.id - a.id) : [];
-             setMessages(sortedData);
-          }
-        } else {
-          const sortedData = data ? [...data].sort((a, b) => b.id - a.id) : [];
-          setMessages(sortedData);
-        }
-      };
-
-      fetchMessages();
+      if (fallbackError) {
+         console.error('Fallback Data error:', fallbackError);
+      } else {
+         const sortedData = fallbackData ? [...fallbackData].sort((a, b) => {
+           const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+           const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+           return timeB !== timeA ? timeB - timeA : (b.id > a.id ? 1 : -1);
+         }) : [];
+         setMessages(sortedData);
+      }
+    } else {
+      const sortedData = data ? [...data].sort((a, b) => {
+        const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+        return timeB !== timeA ? timeB - timeA : (b.id > a.id ? 1 : -1);
+      }) : [];
+      setMessages(sortedData);
     }
+  };
+
+  useEffect(() => {
+    fetchMessages();
   }, [isDashAuthenticated, selectedGrad, viewMode]);
 
   const startRecording = async () => {
@@ -430,19 +438,25 @@ const App = () => {
     
     triggerHaptic(50);
     try {
+      // Optimistic update
+      setMessages(prev => prev.filter(m => String(m.id) !== String(msgId)));
+      if (activeMessage?.id === msgId) setActiveMessage(null);
+
       const { data: success, error } = await supabase.rpc('hide_vault_message', {
         msg_id: msgId,
         input_key: dashPassword
       });
 
       if (error) throw error;
-      if (success) {
-        setMessages(prev => prev.filter(m => m.id !== msgId));
-        if (activeMessage?.id === msgId) setActiveMessage(null);
+      if (!success) {
+        // Rollback if failed
+        throw new Error('RPC returned false');
       }
     } catch (err) {
       console.error('Hide error:', err);
-      setError(lang === 'ar' ? 'فشل إخفاء الرسالة.' : 'Failed to hide message.');
+      setError(lang === 'ar' ? 'فشل إخفاء الرسالة. تأكد من الصلاحيات.' : 'Failed to hide message. Check permissions.');
+      // Refresh to restore state
+      fetchMessages();
     }
   };
 
@@ -469,19 +483,24 @@ const App = () => {
     
     triggerHaptic(50);
     try {
+      // Optimistic update
+      setMessages(prev => prev.filter(m => String(m.id) !== String(msgId)));
+      if (activeMessage?.id === msgId) setActiveMessage(null);
+
       const { data: success, error } = await supabase.rpc('delete_vault_message', {
         msg_id: msgId,
         input_key: dashPassword
       });
 
       if (error) throw error;
-      if (success) {
-        setMessages(prev => prev.filter(m => m.id !== msgId));
-        if (activeMessage?.id === msgId) setActiveMessage(null);
+      if (!success) {
+        throw new Error('RPC returned false');
       }
     } catch (err) {
       console.error('Delete error:', err);
-      setError(lang === 'ar' ? 'فشل حذف الرسالة.' : 'Failed to delete message.');
+      setError(lang === 'ar' ? 'فشل حذف الرسالة. تأكد من الصلاحيات.' : 'Failed to delete message. Check permissions.');
+      // Refresh to restore state
+      fetchMessages();
     }
   };
 
