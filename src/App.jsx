@@ -743,24 +743,7 @@ const App = () => {
                                   <Trash2 size={18} />
                                 </button>
                               </>
-                            ) : (
-                              <>
-                                <button 
-                                  onClick={(e) => { e.stopPropagation(); restoreMessage(msg.id); }} 
-                                  className="p-2.5 md:p-3 rounded-xl bg-white/5 hover:bg-green-500 hover:text-white transition-all"
-                                  title={lang === 'ar' ? 'استعادة' : 'Restore'}
-                                >
-                                  <RotateCcw size={18} />
-                                </button>
-                                <button 
-                                  onClick={(e) => { e.stopPropagation(); deleteMessage(msg.id); }} 
-                                  className="p-2.5 md:p-3 rounded-xl bg-white/5 hover:bg-red-500 hover:text-white transition-all"
-                                  title={lang === 'ar' ? 'حذف' : 'Delete'}
-                                >
-                                  <Trash2 size={18} />
-                                </button>
-                              </>
-                            )}
+                            ) : null}
                             <button className="p-2.5 md:p-3 rounded-xl bg-white/5 hover:bg-neon-blue hover:text-black transition-all">
                               <Eye size={18} />
                             </button>
@@ -774,7 +757,7 @@ const App = () => {
 
             <AnimatePresence>
               {activeMessage && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl flex flex-col items-center justify-start p-6 md:p-12 overflow-y-auto">
+                                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl flex flex-col items-center justify-start p-6 md:p-12 overflow-y-auto">
                   <button onClick={() => setActiveMessage(null)} className="fixed top-6 right-6 md:top-10 md:right-10 p-4 rounded-full bg-white/10 hover:bg-white/20 transition-all text-white z-50"><X size={24} /></button>
                   <div className="max-w-4xl w-full flex flex-col gap-8 py-16 md:py-20">
                     <div className="bg-white/5 border border-white/10 rounded-[2rem] md:rounded-[3rem] p-8 md:p-14 text-center">
@@ -799,6 +782,24 @@ const App = () => {
                             )}
                           </div>
                         ))}
+                      </div>
+                    )}
+                    {viewMode === 'hidden' && (
+                      <div className="flex gap-4 justify-center mt-4">
+                        <button
+                          onClick={() => { restoreMessage(activeMessage.id); setActiveMessage(null); }}
+                          className="flex items-center gap-3 px-8 py-4 rounded-2xl bg-green-500/20 border border-green-500/40 text-green-400 hover:bg-green-500 hover:text-black font-bold transition-all"
+                        >
+                          <RotateCcw size={20} />
+                          {lang === 'ar' ? 'استعادة البصمة' : 'Restore Mark'}
+                        </button>
+                        <button
+                          onClick={() => { deleteMessage(activeMessage.id); setActiveMessage(null); }}
+                          className="flex items-center gap-3 px-8 py-4 rounded-2xl bg-red-500/20 border border-red-500/40 text-red-400 hover:bg-red-500 hover:text-white font-bold transition-all"
+                        >
+                          <Trash2 size={20} />
+                          {lang === 'ar' ? 'حذف نهائي' : 'Delete Permanently'}
+                        </button>
                       </div>
                     )}
                   </div>
