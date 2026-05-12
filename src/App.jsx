@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   User, Send, CheckCircle, Shield, ArrowLeft, Mic, 
   Image as ImageIcon, Video, X, AlertCircle, Languages, 
-  Lock, Mail, Eye, Download, Star, ExternalLink, Menu, Settings, Terminal, Loader2, Play, Square
+  Lock, Mail, Eye, Download, Star, ExternalLink, Menu, Settings, Terminal, Loader2, Play, Square, Trash2, Archive, RotateCcw
 } from 'lucide-react';
 import { supabase } from './supabaseClient';
 import grad1 from './assets/grad1.jpg';
@@ -130,6 +130,9 @@ const translations = {
     startRecording: 'Start Recording',
     stopRecording: 'Stop & Save',
     recording: 'Recording...',
+    archive: 'الأرشيف',
+    activeVault: 'الخزنة الرئيسية',
+    restore: 'استعادة',
   }
 };
 
@@ -197,6 +200,7 @@ const App = () => {
   const [isDashAuthenticated, setIsDashAuthenticated] = useState(false);
   const [messages, setMessages] = useState([]);
   const [activeMessage, setActiveMessage] = useState(null);
+  const [viewMode, setViewMode] = useState('active'); // 'active' or 'hidden'
 
 
   const [isRecording, setIsRecording] = useState(false);
@@ -210,7 +214,8 @@ const App = () => {
   useEffect(() => {
     if (isDashAuthenticated && selectedGrad) {
       const fetchMessages = async () => {
-        const { data, error } = await supabase.rpc('fetch_vault_messages', {
+        const rpcName = viewMode === 'active' ? 'fetch_vault_messages' : 'fetch_hidden_messages';
+        const { data, error } = await supabase.rpc(rpcName, {
           target_grad_id: selectedGrad.id,
           input_key: dashPassword
         });
@@ -234,19 +239,8 @@ const App = () => {
       };
 
       fetchMessages();
-
-      const subscription = supabase
-        .channel('vault_channel')
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `graduate_id=eq.${selectedGrad.id}` }, payload => {
-          setMessages(prev => [payload.new, ...prev]);
-        })
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(subscription);
-      };
     }
-  }, [isDashAuthenticated, selectedGrad]);
+  }, [isDashAuthenticated, selectedGrad, viewMode]);
 
   const startRecording = async () => {
     try {
@@ -430,6 +424,45 @@ const App = () => {
     }
   };
 
+  const hideMessage = async (msgId) => {
+    if (!window.confirm(lang === 'ar' ? 'هل أنت متأكد من إخفاء هذه البصمة؟' : 'Are you sure you want to hide this mark?')) return;
+    
+    triggerHaptic(50);
+    try {
+      const { data: success, error } = await supabase.rpc('hide_vault_message', {
+        msg_id: msgId,
+        input_key: dashPassword
+      });
+
+      if (error) throw error;
+      if (success) {
+        setMessages(prev => prev.filter(m => m.id !== msgId));
+        if (activeMessage?.id === msgId) setActiveMessage(null);
+      }
+    } catch (err) {
+      console.error('Hide error:', err);
+      setError(lang === 'ar' ? 'فشل إخفاء الرسالة.' : 'Failed to hide message.');
+    }
+  };
+
+  const restoreMessage = async (msgId) => {
+    triggerHaptic(30);
+    try {
+      const { data: success, error } = await supabase.rpc('restore_vault_message', {
+        msg_id: msgId,
+        input_key: dashPassword
+      });
+
+      if (error) throw error;
+      if (success) {
+        setMessages(prev => prev.filter(m => m.id !== msgId));
+      }
+    } catch (err) {
+      console.error('Restore error:', err);
+      setError(lang === 'ar' ? 'فشل استعادة الرسالة.' : 'Failed to restore message.');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-charcoal text-white font-['Inter',sans-serif] selection:bg-neon-blue/30 overflow-x-hidden transition-all duration-500 safe-area-inset" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
       {showStardust && <Stardust />}
@@ -599,7 +632,16 @@ const App = () => {
                   <h1 className="text-3xl md:text-6xl font-black mb-4">{lang === 'ar' ? 'أهلاً يا' : 'Welcome,'} <span style={{ color: selectedGrad.accent }}>{selectedGrad.name[lang].split(' ')[0]}</span></h1>
                   <div className="flex items-center gap-4 text-white/50"><Mail size={18} /><span className="font-bold text-base md:text-lg">{messages.length} {t('totalMessages')}</span><div className="flex items-center gap-2 text-green-500 text-xs animate-pulse"><div className="w-1.5 h-1.5 rounded-full bg-green-500" />Live</div></div>
                 </div>
-                <button onClick={handleReset} className="w-full md:w-auto px-6 py-3 rounded-xl bg-white/5 border border-white/10 font-bold hover:bg-white/10 text-sm md:text-base">{t('back')}</button>
+                <div className="flex flex-col md:flex-row gap-4">
+                  <button 
+                    onClick={() => { setViewMode(viewMode === 'active' ? 'hidden' : 'active'); triggerHaptic(20); }} 
+                    className={`flex items-center gap-2 px-6 py-3 rounded-xl border transition-all font-bold text-sm ${viewMode === 'hidden' ? 'bg-neon-purple text-black border-neon-purple' : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'}`}
+                  >
+                    {viewMode === 'active' ? <Archive size={18} /> : <RotateCcw size={18} />}
+                    {viewMode === 'active' ? t('archive') : t('activeVault')}
+                  </button>
+                  <button onClick={handleReset} className="w-full md:w-auto px-6 py-3 rounded-xl bg-white/5 border border-white/10 font-bold hover:bg-white/10 text-sm md:text-base">{t('back')}</button>
+                </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                 {messages.map((msg, i) => (
@@ -612,10 +654,29 @@ const App = () => {
                           <Play size={14} /> {t('mediaSecured')}
                         </div>
                       )}
-                      <div className="flex justify-between items-center">
-                        <div className="text-xs md:text-sm"><span className="font-bold text-neon-blue">{msg.sender_name || (lang === 'ar' ? 'مجهول' : 'Anonymous')}</span></div>
-                        <button className="p-2.5 md:p-3 rounded-xl bg-white/5 hover:bg-neon-blue hover:text-black transition-all"><Eye size={18} /></button>
-                      </div>
+                        <div className="flex justify-between items-center">
+                          <div className="text-xs md:text-sm"><span className="font-bold text-neon-blue">{msg.sender_name || (lang === 'ar' ? 'مجهول' : 'Anonymous')}</span></div>
+                          <div className="flex gap-2">
+                            {viewMode === 'active' ? (
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); hideMessage(msg.id); }} 
+                                className="p-2.5 md:p-3 rounded-xl bg-white/5 hover:bg-red-500 hover:text-white transition-all"
+                              >
+                                <Trash2 size={18} />
+                              </button>
+                            ) : (
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); restoreMessage(msg.id); }} 
+                                className="p-2.5 md:p-3 rounded-xl bg-white/5 hover:bg-green-500 hover:text-white transition-all"
+                              >
+                                <RotateCcw size={18} />
+                              </button>
+                            )}
+                            <button className="p-2.5 md:p-3 rounded-xl bg-white/5 hover:bg-neon-blue hover:text-black transition-all">
+                              <Eye size={18} />
+                            </button>
+                          </div>
+                        </div>
                     </div>
                   </motion.div>
                 ))}
