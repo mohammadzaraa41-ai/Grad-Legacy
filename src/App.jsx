@@ -234,7 +234,8 @@ const App = () => {
              setMessages(sortedData);
           }
         } else {
-          setMessages(data || []);
+          const sortedData = data ? [...data].sort((a, b) => b.id - a.id) : [];
+          setMessages(sortedData);
         }
       };
 
@@ -463,6 +464,27 @@ const App = () => {
     }
   };
 
+  const deleteMessage = async (msgId) => {
+    if (!window.confirm(lang === 'ar' ? 'هل أنت متأكد من حذف هذه البصمة نهائياً؟' : 'Are you sure you want to permanently delete this mark?')) return;
+    
+    triggerHaptic(50);
+    try {
+      const { data: success, error } = await supabase.rpc('delete_vault_message', {
+        msg_id: msgId,
+        input_key: dashPassword
+      });
+
+      if (error) throw error;
+      if (success) {
+        setMessages(prev => prev.filter(m => m.id !== msgId));
+        if (activeMessage?.id === msgId) setActiveMessage(null);
+      }
+    } catch (err) {
+      console.error('Delete error:', err);
+      setError(lang === 'ar' ? 'فشل حذف الرسالة.' : 'Failed to delete message.');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-charcoal text-white font-['Inter',sans-serif] selection:bg-neon-blue/30 overflow-x-hidden transition-all duration-500 safe-area-inset" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
       {showStardust && <Stardust />}
@@ -658,19 +680,39 @@ const App = () => {
                           <div className="text-xs md:text-sm"><span className="font-bold text-neon-blue">{msg.sender_name || (lang === 'ar' ? 'مجهول' : 'Anonymous')}</span></div>
                           <div className="flex gap-2">
                             {viewMode === 'active' ? (
-                              <button 
-                                onClick={(e) => { e.stopPropagation(); hideMessage(msg.id); }} 
-                                className="p-2.5 md:p-3 rounded-xl bg-white/5 hover:bg-red-500 hover:text-white transition-all"
-                              >
-                                <Trash2 size={18} />
-                              </button>
+                              <>
+                                <button 
+                                  onClick={(e) => { e.stopPropagation(); hideMessage(msg.id); }} 
+                                  className="p-2.5 md:p-3 rounded-xl bg-white/5 hover:bg-neon-purple hover:text-black transition-all"
+                                  title={lang === 'ar' ? 'أرشفة' : 'Archive'}
+                                >
+                                  <Archive size={18} />
+                                </button>
+                                <button 
+                                  onClick={(e) => { e.stopPropagation(); deleteMessage(msg.id); }} 
+                                  className="p-2.5 md:p-3 rounded-xl bg-white/5 hover:bg-red-500 hover:text-white transition-all"
+                                  title={lang === 'ar' ? 'حذف' : 'Delete'}
+                                >
+                                  <Trash2 size={18} />
+                                </button>
+                              </>
                             ) : (
-                              <button 
-                                onClick={(e) => { e.stopPropagation(); restoreMessage(msg.id); }} 
-                                className="p-2.5 md:p-3 rounded-xl bg-white/5 hover:bg-green-500 hover:text-white transition-all"
-                              >
-                                <RotateCcw size={18} />
-                              </button>
+                              <>
+                                <button 
+                                  onClick={(e) => { e.stopPropagation(); restoreMessage(msg.id); }} 
+                                  className="p-2.5 md:p-3 rounded-xl bg-white/5 hover:bg-green-500 hover:text-white transition-all"
+                                  title={lang === 'ar' ? 'استعادة' : 'Restore'}
+                                >
+                                  <RotateCcw size={18} />
+                                </button>
+                                <button 
+                                  onClick={(e) => { e.stopPropagation(); deleteMessage(msg.id); }} 
+                                  className="p-2.5 md:p-3 rounded-xl bg-white/5 hover:bg-red-500 hover:text-white transition-all"
+                                  title={lang === 'ar' ? 'حذف' : 'Delete'}
+                                >
+                                  <Trash2 size={18} />
+                                </button>
+                              </>
                             )}
                             <button className="p-2.5 md:p-3 rounded-xl bg-white/5 hover:bg-neon-blue hover:text-black transition-all">
                               <Eye size={18} />
