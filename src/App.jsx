@@ -221,21 +221,28 @@ const App = () => {
     });
     
     if (error) {
-      console.warn('RPC failed or missing. Attempting direct fallback...', error);
+      console.warn('RPC failed or missing (404). Attempting direct fallback...', error);
+      // Fallback to direct table access
       let query = supabase.from('messages').select('*').eq('graduate_id', selectedGrad.id);
       
-      // Try to filter out hidden messages in fallback if we're in active vault
-      // We don't know the column name for sure, but we can try common ones or just let the user see all
       const { data: fallbackData, error: fallbackError } = await query;
         
       if (fallbackError) {
          console.error('Fallback Data error:', fallbackError);
       } else {
-         const sortedData = fallbackData ? [...fallbackData].sort((a, b) => {
+         // Manual filtering for viewMode if column exists, otherwise show all
+         let processedData = fallbackData || [];
+         if (viewMode === 'active') {
+           processedData = processedData.filter(m => m.is_hidden !== true);
+         } else {
+           processedData = processedData.filter(m => m.is_hidden === true);
+         }
+
+         const sortedData = [...processedData].sort((a, b) => {
            const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
            const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
            return timeB !== timeA ? timeB - timeA : (String(b.id) > String(a.id) ? 1 : -1);
-         }) : [];
+         });
          setMessages(sortedData);
       }
     } else {
@@ -449,14 +456,19 @@ const App = () => {
         input_key: dashPassword
       });
 
-      if (error) throw error;
-      if (success === false) {
+      if (error) {
+        console.warn('RPC hide failed (404?), trying direct update...');
+        const { error: directError } = await supabase
+          .from('messages')
+          .update({ is_hidden: true })
+          .eq('id', msgId);
+        if (directError) throw directError;
+      } else if (success === false) {
         throw new Error('Action rejected by server');
       }
     } catch (err) {
       console.error('Hide error:', err);
       setError(lang === 'ar' ? `فشل الإخفاء: ${err.message || 'خطأ في الصلاحيات'}` : `Hide failed: ${err.message || 'Permission error'}`);
-      // Refresh to restore state after a delay
       setTimeout(fetchMessages, 2000);
     }
   };
@@ -464,18 +476,29 @@ const App = () => {
   const restoreMessage = async (msgId) => {
     triggerHaptic(30);
     try {
+      // Optimistic update
+      setMessages(prev => prev.filter(m => String(m.id) !== String(msgId)));
+
       const { data: success, error } = await supabase.rpc('restore_vault_message', {
         msg_id: msgId,
+        message_id: msgId,
         input_key: dashPassword
       });
 
-      if (error) throw error;
-      if (success) {
-        setMessages(prev => prev.filter(m => m.id !== msgId));
+      if (error) {
+        console.warn('RPC restore failed (404?), trying direct update...');
+        const { error: directError } = await supabase
+          .from('messages')
+          .update({ is_hidden: false })
+          .eq('id', msgId);
+        if (directError) throw directError;
+      } else if (success === false) {
+        throw new Error('Action rejected by server');
       }
     } catch (err) {
       console.error('Restore error:', err);
-      setError(lang === 'ar' ? 'فشل استعادة الرسالة.' : 'Failed to restore message.');
+      setError(lang === 'ar' ? `فشل الاستعادة: ${err.message}` : `Restore failed: ${err.message}`);
+      setTimeout(fetchMessages, 2000);
     }
   };
 
